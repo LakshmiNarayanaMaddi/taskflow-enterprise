@@ -1,4 +1,4 @@
-package com.taskflow.identityservice;
+package com.taskflow.identity;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

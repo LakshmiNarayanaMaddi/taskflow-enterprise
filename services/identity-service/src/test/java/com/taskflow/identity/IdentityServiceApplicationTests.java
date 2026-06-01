@@ -1,4 +1,4 @@
-package com.taskflow.identityservice;
+package com.taskflow.identity;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
