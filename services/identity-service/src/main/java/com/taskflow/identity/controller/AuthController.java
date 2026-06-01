@@ -1,8 +1,10 @@
 package com.taskflow.identity.controller;
 
 import com.taskflow.identity.dto.AuthResponse;
+import com.taskflow.identity.dto.ErrorResponse;
 import com.taskflow.identity.dto.LoginRequest;
 import com.taskflow.identity.dto.RegisterRequest;
+import com.taskflow.identity.security.JwtService;
 import com.taskflow.identity.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
@@ -38,5 +41,36 @@ public class AuthController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Identity Service is running");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(
+            @RequestHeader(value = "Authorization", required = false)
+            String authHeader) {
+
+        // Return 401 if no token provided
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.builder()
+                            .status(401)
+                            .error("Unauthorized")
+                            .message("Authorization token is required")
+                            .path("/api/auth/me")
+                            .build());
+        }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractEmail(token);
+        String userId = jwtService.extractUserId(token);
+        String role = jwtService.extractClaim(token,
+                claims -> claims.get("role", String.class));
+
+        return ResponseEntity.ok(
+                AuthResponse.builder()
+                        .userId(userId)
+                        .email(email)
+                        .role(role)
+                        .build()
+        );
     }
 }
