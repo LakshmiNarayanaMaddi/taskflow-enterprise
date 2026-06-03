@@ -1,11 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate }
+  from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider }
+  from '@tanstack/react-query';
 import { store } from './store';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import ProjectsPage from './pages/projects/ProjectsPage';
+import KanbanPage from './pages/projects/KanbanPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,18 +30,17 @@ const App = () => {
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            {/* Protected routes — wrapped in MainLayout */}
+            {/* Protected routes */}
             <Route element={<MainLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard"
+                     element={<DashboardPage />} />
               <Route path="/projects"
-                     element={<div className="p-8">
-                       <h1 className="text-2xl font-bold">
-                         Projects — coming next
-                       </h1>
-                     </div>} />
+                     element={<ProjectsPage />} />
+              <Route path="/projects/:projectId"
+                     element={<KanbanPage />} />
             </Route>
 
-            {/* Default redirect */}
+            {/* Default */}
             <Route path="/"
                    element={<Navigate to="/dashboard" replace />} />
           </Routes>
