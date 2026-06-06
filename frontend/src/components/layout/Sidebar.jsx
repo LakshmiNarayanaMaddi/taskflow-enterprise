@@ -2,17 +2,15 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/authSlice';
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Settings,
-  LogOut,
-  User
+  LayoutDashboard, FolderKanban,
+  Settings, LogOut, User
 } from 'lucide-react';
+import NotificationBell from '../common/NotificationBell';
 
 const Sidebar = () => {
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
-  const { user }  = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -29,16 +27,21 @@ const Sidebar = () => {
     <aside className="w-64 bg-white border-r border-gray-200
                       flex flex-col h-screen fixed left-0 top-0">
 
-      {/* Logo */}
+      {/* Logo + Bell */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg
-                          flex items-center justify-center">
-            <span className="text-white font-bold text-sm">T</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary-600 rounded-lg
+                            flex items-center justify-center">
+              <span className="text-white font-bold text-sm">
+                T
+              </span>
+            </div>
+            <span className="font-bold text-gray-900 text-lg">
+              TaskFlow
+            </span>
           </div>
-          <span className="font-bold text-gray-900 text-lg">
-            TaskFlow
-          </span>
+          <NotificationBell />
         </div>
       </div>
 
@@ -71,7 +74,8 @@ const Sidebar = () => {
             <User size={16} className="text-primary-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900
+                          truncate">
               {user?.email}
             </p>
             <p className="text-xs text-gray-500">{user?.role}</p>
@@ -79,9 +83,10 @@ const Sidebar = () => {
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-sm text-gray-500
-                     hover:text-red-600 transition-colors w-full
-                     px-2 py-1.5 rounded-lg hover:bg-red-50"
+          className="flex items-center gap-2 text-sm
+                     text-gray-500 hover:text-red-600
+                     transition-colors w-full px-2 py-1.5
+                     rounded-lg hover:bg-red-50"
         >
           <LogOut size={16} />
           Sign out
