@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.taskflow.project.event.TaskEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,39 +24,88 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final KafkaProducerService kafkaProducerService;
 
-    @Transactional
-    public TaskResponse createTask(String projectId,
-                                   TaskRequest request,
-                                   String reporterId) {
+        @Transactional
+        public TaskResponse createTask(String projectId,
+                                       TaskRequest request,
+                                       String reporterId) {
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() ->
+                            new RuntimeException("Project not found: "
+                                    + projectId));
 
-        // Verify project exists
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new RuntimeException("Project not found: "
-                                + projectId));
+            Task task = Task.builder()
+                    .id(UUID.randomUUID().toString())
+                    .title(request.getTitle())
+                    .description(request.getDescription())
+                    .status(Task.Status.TODO)
+                    .priority(Task.Priority.valueOf(
+                            request.getPriority().toUpperCase()))
+                    .project(project)
+                    .assigneeId(request.getAssigneeId())
+                    .reporterId(reporterId)
+                    .dueDate(request.getDueDate() != null
+                            ? LocalDateTime.parse(request.getDueDate())
+                            : null)
+                    .build();
 
-        Task task = Task.builder()
-                .id(UUID.randomUUID().toString())
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .status(Task.Status.TODO)
-                .priority(Task.Priority.valueOf(
-                        request.getPriority().toUpperCase()))
-                .project(project)
-                .assigneeId(request.getAssigneeId())
-                .reporterId(reporterId)
-                .dueDate(request.getDueDate() != null
-                        ? LocalDateTime.parse(request.getDueDate())
-                        : null)
-                .build();
+            Task saved = taskRepository.save(task);
 
-        Task saved = taskRepository.save(task);
-        log.info("Task created: {} in project: {}",
-                saved.getId(), projectId);
+            // Publish Kafka event if task has assignee
+            if (saved.getAssigneeId() != null) {
+                kafkaProducerService.publishTaskAssigned(
+                        TaskEvent.builder()
+                                .eventType("TASK_ASSIGNED")
+                                .taskId(saved.getId())
+                                .taskTitle(saved.getTitle())
+                                .projectId(project.getId())
+                                .projectName(project.getName())
+                                .assigneeId(saved.getAssigneeId())
+                                .reporterId(saved.getReporterId())
+                                .timestamp(System.currentTimeMillis())
+                                .build()
+                );
+            }
 
-        return mapToResponse(saved);
-    }
+            log.info("Task created: {}", saved.getId());
+            return mapToResponse(saved);
+        }
+
+        @Transactional
+        public TaskResponse updateTaskStatus(String taskId,
+                                             String status,
+                                             String userId) {
+            Task task = taskRepository.findById(taskId)
+                    .orElseThrow(() ->
+                            new RuntimeException("Task not found: "
+                                    + taskId));
+
+            task.setStatus(Task.Status.valueOf(status.toUpperCase()));
+            Task saved = taskRepository.save(task);
+
+            // Publish status change event
+            kafkaProducerService.publishTaskStatusChanged(
+                    TaskEvent.builder()
+                            .eventType("TASK_STATUS_CHANGED")
+                            .taskId(saved.getId())
+                            .taskTitle(saved.getTitle())
+                            .projectId(saved.getProject().getId())
+                            .projectName(saved.getProject().getName())
+                            .assigneeId(saved.getAssigneeId())
+                            .reporterId(saved.getReporterId())
+                            .status(status)
+                            .changedByUserId(userId)
+                            .timestamp(System.currentTimeMillis())
+                            .build()
+            );
+
+            log.info("Task {} status changed to {} by user {}",
+                    taskId, status, userId);
+            return mapToResponse(saved);
+        }
+
+
 
     public List<TaskResponse> getTasksByProject(String projectId) {
         return taskRepository.findByProjectId(projectId)
@@ -69,21 +119,6 @@ public class TaskService {
                 .orElseThrow(() ->
                         new RuntimeException("Task not found: " + taskId));
         return mapToResponse(task);
-    }
-
-    @Transactional
-    public TaskResponse updateTaskStatus(String taskId,
-                                         String status,
-                                         String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() ->
-                        new RuntimeException("Task not found: " + taskId));
-
-        task.setStatus(Task.Status.valueOf(status.toUpperCase()));
-        log.info("Task {} status changed to {} by user {}",
-                taskId, status, userId);
-
-        return mapToResponse(taskRepository.save(task));
     }
 
     @Transactional
