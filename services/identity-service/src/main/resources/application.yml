@@ -48,3 +48,16 @@ logging:
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400000
+
+  spring:
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://localhost:8180/realms/taskflow
+
+  keycloak:
+    realm: taskflow
+    auth-server-url: http://localhost:8180
+    resource: taskflow-frontend
+    client-secret: YOUR_CLIENT_SECRET_FROM_STEP_4

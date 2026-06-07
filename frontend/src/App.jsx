@@ -1,3 +1,4 @@
+import CallbackPage from './pages/auth/CallbackPage';
 import { BrowserRouter, Routes, Route, Navigate }
   from 'react-router-dom';
 import { Provider } from 'react-redux';
@@ -10,6 +11,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProjectsPage from './pages/projects/ProjectsPage';
 import KanbanPage from './pages/projects/KanbanPage';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +41,7 @@ const App = () => {
               <Route path="/projects/:projectId"
                      element={<KanbanPage />} />
             </Route>
+            <Route path="/auth/callback" element={<CallbackPage />} />
 
             {/* Default */}
             <Route path="/"

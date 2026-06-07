@@ -12,10 +12,23 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
-  };
+const handleLogout = () => {
+  // 1. Clear Redux state and localStorage
+  dispatch(logout());
+
+  // 2. Also destroy the Keycloak session
+  // This forces Keycloak to ask for credentials next time
+  const keycloakLogoutUrl =
+    'http://localhost:8180/realms/taskflow/protocol/openid-connect/logout';
+
+  const params = new URLSearchParams({
+    post_logout_redirect_uri: 'http://localhost:5173/login',
+    client_id: 'taskflow-frontend',
+  });
+
+  // Redirect to Keycloak logout — this kills the SSO session
+  window.location.href = `${keycloakLogoutUrl}?${params}`;
+};
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
