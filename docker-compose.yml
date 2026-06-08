@@ -98,11 +98,40 @@ services:
     networks:
       - taskflow-network
 
+# ─── Elasticsearch ────────────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: taskflow-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - taskflow-network
+
+  # ─── Kibana (Elasticsearch UI) ────────────────────────────
+  kibana:
+    image: kibana:8.13.0
+    container_name: taskflow-kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - taskflow-network
+
 # ─── Named volumes (data persists when containers stop) ─────
 volumes:
   postgres-data:
   mongo-data:
   redis-data:
+  elasticsearch-data:
 
 # ─── Network (all containers talk to each other) ────────────
 networks:

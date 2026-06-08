@@ -21,6 +21,8 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
 
+    private final KafkaProducerService kafkaProducerService;
+
     @Transactional
     public ProjectResponse createProject(ProjectRequest request,
                                          String ownerId) {
@@ -45,6 +47,14 @@ public class ProjectService {
         project.getMembers().add(ownerMember);
 
         Project saved = projectRepository.save(project);
+
+        // Publish to Kafka for search indexing
+        kafkaProducerService.publishProjectCreated(
+                saved.getId(),
+                saved.getName(),
+                saved.getDescription(),
+                saved.getOwnerId()
+        );
         log.info("Project created: {} by user: {}",
                 saved.getId(), ownerId);
 

@@ -1,6 +1,7 @@
 package com.taskflow.project.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.taskflow.project.event.SearchEvent;
 import com.taskflow.project.event.TaskEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,33 @@ public class KafkaProducerService {
                     topic, event.getTaskId());
         } catch (Exception e) {
             log.error("Failed to publish Kafka event: {}",
+                    e.getMessage());
+        }
+    }
+
+    public void publishProjectCreated(
+            String projectId,
+            String projectName,
+            String description,
+            String ownerId) {
+
+        try {
+            SearchEvent event = SearchEvent.builder()
+                    .eventType("PROJECT_CREATED")
+                    .entityType("PROJECT")
+                    .entityId(projectId)
+                    .title(projectName)
+                    .description(description)
+                    .status("ACTIVE")
+                    .ownerId(ownerId)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            String message = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send("project.created", projectId, message);
+            log.info("Published project.created event: {}", projectId);
+        } catch (Exception e) {
+            log.error("Failed to publish project event: {}",
                     e.getMessage());
         }
     }

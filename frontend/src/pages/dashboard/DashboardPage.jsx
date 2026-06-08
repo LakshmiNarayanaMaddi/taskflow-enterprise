@@ -51,7 +51,7 @@ const DashboardPage = () => {
             Welcome back, {user?.email}
           </p>
         </div>
-        <Button onClick={() => navigate('/projects/new')}>
+        <Button onClick={() => navigate('/projects')}>
           <Plus size={16} className="mr-2" />
           New Project
         </Button>
@@ -99,7 +99,7 @@ const DashboardPage = () => {
             <FolderKanban size={40}
                           className="text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 mb-4">No projects yet</p>
-            <Button onClick={() => navigate('/projects/new')}>
+            <Button onClick={() => navigate('/projects')}>
               Create your first project
             </Button>
           </div>
